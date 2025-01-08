@@ -1,6 +1,7 @@
 import pdfplumber
 import re
 import json
+import os
 import pandas as pd
 
 def extract_data_from_pdf(pdf_path):
@@ -39,7 +40,7 @@ def extract_data_from_pdf(pdf_path):
             "Personas afectadas": r"(\d+)\s+personas afectadas",
             "Personas damnificadas": r"(\d+)\s+damnificadas",
             "Viviendas afectadas": r"Viviendas afectadas.*?(\d+)",
-            "Superficie agrícola con afectación total o perdida": r"Superficie agrícola.*?(\d+)\s*ha",
+            "Superficie agrícola con afectación total o perdida": r"Superficie agrícola con afectación total o pérdida \(ha\).*?(\d+)",
             "Animales con afectación": r"Animales con afectación\s+(\d+)",
             "Animales muertos": r"Animales muertos\s+(\d+)"
         }
@@ -51,26 +52,28 @@ def extract_data_from_pdf(pdf_path):
 
     return data
 
-
-
-
-def process_pdf_to_json(pdf_path, output_json):
-    data = extract_data_from_pdf(pdf_path)
+def process_pdfs_in_folder(folder_path, output_json, output_csv):
+    all_data = []
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".pdf"):
+            pdf_path = os.path.join(folder_path, file_name)
+            print(f"Procesando archivo: {pdf_path}")
+            data = extract_data_from_pdf(pdf_path)
+            data["Archivo"] = file_name  # Agregar nombre del archivo al registro
+            all_data.append(data)
     
+    # Guardar en JSON
     with open(output_json, 'w', encoding='utf-8') as f:
-        json.dump([data], f, ensure_ascii=False, indent=4)
-
-def json_to_csv(json_file, output_csv):
-    with open(json_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+        json.dump(all_data, f, ensure_ascii=False, indent=4)
     
-    df = pd.DataFrame(data)
+    # Convertir a CSV
+    df = pd.DataFrame(all_data)
     df.to_csv(output_csv, index=False, encoding='utf-8')
 
+
 # Uso del script
-pdf_path = "pdf/Informe-de-Situacion-No-10-Chunchi-01032021.pdf"  
+folder_path = "pdf/"  # Carpeta con los PDFs
 output_json = "output_data.json"
 output_csv = "output_data.csv"
 
-process_pdf_to_json(pdf_path, output_json)
-json_to_csv(output_json, output_csv)
+process_pdfs_in_folder(folder_path, output_json, output_csv)
