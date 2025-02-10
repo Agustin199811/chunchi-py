@@ -10,8 +10,8 @@ df = pd.read_csv("output_data.csv")
 
 
 # Configurar el idioma a español
-#locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Para sistemas Linux/macOS
-locale.setlocale(locale.LC_TIME, "Spanish_Spain.1252")  # Para Windows
+locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Para sistemas Linux/macOS
+#locale.setlocale(locale.LC_TIME, "Spanish_Spain.1252")  
 
 # Limpiar la columna de fechas
 df["Fecha y Hora de actualización"] = df["Fecha y Hora de actualización"].apply(
