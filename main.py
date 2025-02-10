@@ -1,23 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import datetime
 import re
-import locale
+from babel import Locale
+from babel.dates import format_date
 
 # Cargar datos
 df = pd.read_csv("output_data.csv")
 
-
-# Intentar configurar el idioma a español
-try:
-    locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Intentar en sistemas Linux/macOS
-except locale.Error:
-    try:
-        locale.setlocale(locale.LC_TIME, "Spanish_Spain.1252")  # Intentar en Windows
-    except locale.Error:
-        st.warning("No se pudo configurar el idioma a español, usando la configuración predeterminada.")
-
+# Configuración de Babel para español
+locale = Locale("es", "ES")
 
 # Limpiar la columna de fechas
 df["Fecha y Hora de actualización"] = df["Fecha y Hora de actualización"].apply(
@@ -29,20 +21,24 @@ df["Fecha y Hora de actualización"] = df["Fecha y Hora de actualización"].appl
     lambda x: re.sub(r"Informe No\. \d+", "", str(x)).strip()
 )
 
-# Intentar convertir con formato en español
-df["Fecha y Hora de actualización"] = pd.to_datetime(
-    df["Fecha y Hora de actualización"], 
-    format="%d de %B de %Y - %H:%M:%S",  
-    errors="coerce"
-)
-# Intentar convertir con formato en español
-df["Fecha y Hora de actualización"] = pd.to_datetime(
-    df["Fecha y Hora de actualización"], 
-    format="%d de %B de %Y - %H:%M:%S",  
-    errors="coerce"
-)
+# Convertir la fecha utilizando Babel para el formato en español
+def format_fecha(fecha):
+    try:
+        date_obj = pd.to_datetime(fecha, format="%d de %B de %Y - %H:%M:%S", errors="coerce")
+        if pd.notna(date_obj):
+            return date_obj.strftime("%b %d")  # Formato corto: "Feb 13"
+        return fecha  # Si no se puede convertir, devolver la fecha original
+    except Exception as e:
+        return fecha  # Devolver la fecha original si ocurre algún error
 
-print(df["Fecha y Hora de actualización"].head(10))  # Verificar si ya se convierte correctamente
+# Aplicar la función de formato
+df["Fecha y Hora de actualización"] = df["Fecha y Hora de actualización"].apply(format_fecha)
+
+# Ordenar el DataFrame por la columna de fechas
+df = df.sort_values(by="Fecha y Hora de actualización")
+
+# Verificar el resultado
+print(df["Fecha y Hora de actualización"].head(10))
 
 # Título del dashboard con estilo personalizado
 st.markdown(
